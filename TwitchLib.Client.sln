@@ -15,7 +15,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{7495B75C-C41
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{8C69E628-6CFC-4F25-8CAC-EC63927C0120}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TwitchLib.Communication", "TwitchLib.Communication\src\TwitchLib.Communication\TwitchLib.Communication.csproj", "{C37B03F4-5414-4603-8E7D-44D5FDB415F9}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TwitchLib.Communication", "..\TwitchLib.Communication\src\TwitchLib.Communication\TwitchLib.Communication.csproj", "{C37B03F4-5414-4603-8E7D-44D5FDB415F9}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
