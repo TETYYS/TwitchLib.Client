@@ -12,8 +12,8 @@ namespace TwitchLib.Client.Models
         public string Channel { get; }
         /// <summary>Property representing whether EmoteOnly mode is being applied to chat or not. WILL BE NULL IF VALUE NOT PRESENT.</summary>
         public bool? EmoteOnly { get; }
-        /// <summary>Property representing how long needed to be following to talk </summary>
-        public TimeSpan FollowersOnly { get; }
+        /// <summary>Property representing how long needed to be following to talk. NULL IF NOT NEEDED TO FOLLOW.</summary>
+        public TimeSpan? FollowersOnly { get; }
         /// <summary>Property representing mercury value. Not sure what it's for.</summary>
         public bool Mercury { get; }
         /// <summary>Property representing whether R9K is being applied to chat or not. WILL BE NULL IF VALUE NOT PRESENT.</summary>
@@ -59,7 +59,7 @@ namespace TwitchLib.Client.Models
                         break;
                     case Tags.FollowersOnly:
                         var minutes = int.Parse(tagValue);
-                        FollowersOnly = TimeSpan.FromMinutes(minutes == -1 ? 0 : minutes);
+                        FollowersOnly = minutes == -1 ? null : (TimeSpan?)TimeSpan.FromMinutes(minutes);
                         break;
                     case Tags.RoomId:
                         RoomId = tagValue;
