@@ -71,55 +71,6 @@ namespace TwitchLib.Client.Extensions
         }
 
         /// <summary>
-        /// Invokes the chat commands received.
-        /// </summary>
-        /// <param name="client">The client.</param>
-        /// <param name="botUsername">The bot username.</param>
-        /// <param name="userId">The user identifier.</param>
-        /// <param name="userName">Name of the user.</param>
-        /// <param name="displayName">The display name.</param>
-        /// <param name="colorHex">The color hexadecimal.</param>
-        /// <param name="color">The color.</param>
-        /// <param name="emoteSet">The emote set.</param>
-        /// <param name="message">The message.</param>
-        /// <param name="userType">Type of the user.</param>
-        /// <param name="channel">The channel.</param>
-        /// <param name="id">The identifier.</param>
-        /// <param name="isSubscriber">if set to <c>true</c> [is subscriber].</param>
-        /// <param name="subscribedMonthCount">The subscribed month count.</param>
-        /// <param name="roomId">The room identifier.</param>
-        /// <param name="isTurbo">if set to <c>true</c> [is turbo].</param>
-        /// <param name="isModerator">if set to <c>true</c> [is moderator].</param>
-        /// <param name="isMe">if set to <c>true</c> [is me].</param>
-        /// <param name="isBroadcaster">if set to <c>true</c> [is broadcaster].</param>
-        /// <param name="noisy">The noisy.</param>
-        /// <param name="rawIrcMessage">The raw irc message.</param>
-        /// <param name="emoteReplacedMessage">The emote replaced message.</param>
-        /// <param name="badges">The badges.</param>
-        /// <param name="cheerBadge">The cheer badge.</param>
-        /// <param name="bits">The bits.</param>
-        /// <param name="bitsInDollars">The bits in dollars.</param>
-        /// <param name="commandText">The command text.</param>
-        /// <param name="argumentsAsString">The arguments as string.</param>
-        /// <param name="argumentsAsList">The arguments as list.</param>
-        /// <param name="commandIdentifier">The command identifier.</param>
-        public static void InvokeChatCommandsReceived(this TwitchClient client, string botUsername, string userId, string userName, string displayName,
-            string colorHex, Color color, EmoteSet emoteSet, string message, UserType userType, string channel, string id, bool isSubscriber, int subscribedMonthCount,
-            string roomId, bool isTurbo, bool isModerator, bool isMe, bool isBroadcaster, Noisy noisy, string rawIrcMessage, string emoteReplacedMessage,
-            List<KeyValuePair<string, string>> badges, CheerBadge cheerBadge, int bits, double bitsInDollars, string commandText, string argumentsAsString,
-            List<string> argumentsAsList, char commandIdentifier)
-        {
-            ChatMessage msg = new ChatMessage(botUsername, userId, userName, displayName, colorHex, color, emoteSet, message, userType, channel, id,
-                isSubscriber, subscribedMonthCount, roomId, isTurbo, isModerator, isMe, isBroadcaster, noisy, rawIrcMessage, emoteReplacedMessage,
-                badges, cheerBadge, bits, bitsInDollars);
-            OnChatCommandReceivedArgs model = new OnChatCommandReceivedArgs()
-            {
-                Command = new ChatCommand(msg, commandText, argumentsAsString, argumentsAsList, commandIdentifier)
-            };
-            client.RaiseEvent("OnChatCommandReceived", model);
-        }
-
-        /// <summary>
         /// Invokes the connected.
         /// </summary>
         /// <param name="client">The client.</param>
@@ -707,38 +658,6 @@ namespace TwitchLib.Client.Extensions
                 UserTimeout = new UserTimeout(channel, username, timeoutDuration, timeoutReason)
             };
             client.RaiseEvent("OnUserTimedout", model);
-        }
-
-        /// <summary>
-        /// Invokes the whisper command received.
-        /// </summary>
-        /// <param name="client">The client.</param>
-        /// <param name="badges">The badges.</param>
-        /// <param name="colorHex">The color hexadecimal.</param>
-        /// <param name="color">The color.</param>
-        /// <param name="username">The username.</param>
-        /// <param name="displayName">The display name.</param>
-        /// <param name="emoteSet">The emote set.</param>
-        /// <param name="threadId">The thread identifier.</param>
-        /// <param name="messageId">The message identifier.</param>
-        /// <param name="userId">The user identifier.</param>
-        /// <param name="isTurbo">if set to <c>true</c> [is turbo].</param>
-        /// <param name="botUsername">The bot username.</param>
-        /// <param name="message">The message.</param>
-        /// <param name="userType">Type of the user.</param>
-        /// <param name="commandText">The command text.</param>
-        /// <param name="argumentsAsString">The arguments as string.</param>
-        /// <param name="argumentsAsList">The arguments as list.</param>
-        /// <param name="commandIdentifier">The command identifier.</param>
-        public static void InvokeWhisperCommandReceived(this TwitchClient client, List<KeyValuePair<string, string>> badges, string colorHex, Color color, string username, string displayName, EmoteSet emoteSet, string threadId, string messageId,
-            string userId, bool isTurbo, string botUsername, string message, UserType userType, string commandText, string argumentsAsString, List<string> argumentsAsList, char commandIdentifier)
-        {
-            WhisperMessage whisperMsg = new WhisperMessage(badges, colorHex, color, username, displayName, emoteSet, threadId, messageId, userId, isTurbo, botUsername, message, userType);
-            OnWhisperCommandReceivedArgs model = new OnWhisperCommandReceivedArgs()
-            {
-                Command = new WhisperCommand(whisperMsg, commandText, argumentsAsString, argumentsAsList, commandIdentifier)
-            };
-            client.RaiseEvent("OnWhisperCommandReceived", model);
         }
 
         /// <summary>

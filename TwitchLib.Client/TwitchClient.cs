@@ -37,14 +37,6 @@ namespace TwitchLib.Client
         /// </summary>
         private MessageEmoteCollection _channelEmotes = new MessageEmoteCollection();
         /// <summary>
-        /// The chat command identifiers
-        /// </summary>
-        private readonly ICollection<char> _chatCommandIdentifiers = new HashSet<char>();
-        /// <summary>
-        /// The whisper command identifiers
-        /// </summary>
-        private readonly ICollection<char> _whisperCommandIdentifiers = new HashSet<char>();
-        /// <summary>
         /// The join channel queue
         /// </summary>
         private readonly Queue<JoinedChannel> _joinChannelQueue = new Queue<JoinedChannel>();
@@ -115,11 +107,6 @@ namespace TwitchLib.Client
         /// <value>The twitch username.</value>
         public string TwitchUsername { get; private set; }
         /// <summary>
-        /// The most recent whisper received.
-        /// </summary>
-        /// <value>The previous whisper.</value>
-        public WhisperMessage PreviousWhisper { get; private set; }
-        /// <summary>
         /// The current connection status of the client.
         /// </summary>
         /// <value><c>true</c> if this instance is connected; otherwise, <c>false</c>.</value>
@@ -154,19 +141,18 @@ namespace TwitchLib.Client
         /// </summary>
         /// <value>The connection credentials.</value>
         public ConnectionCredentials ConnectionCredentials { get; private set; }
-        /// <summary>
-        /// Provides access to autorelistiononexception on off boolean.
-        /// </summary>
-        /// <value><c>true</c> if [automatic re listen on exception]; otherwise, <c>false</c>.</value>
-        public bool AutoReListenOnException { get; set; }
 
-        #endregion
+		public bool SendMembershipCapabilityRequest { get; set; }
 
-        #region Events
-        /// <summary>
-        /// Fires when VIPs are received from chat
-        /// </summary>
-        public event EventHandler<OnVIPsReceivedArgs> OnVIPsReceived;
+		public int JoinWaitTimeout { get; set; }
+
+		#endregion
+
+		#region Events
+		/// <summary>
+		/// Fires when VIPs are received from chat
+		/// </summary>
+		public event EventHandler<OnVIPsReceivedArgs> OnVIPsReceived;
 
         /// <summary>
         /// Fires whenever a log write happens.
@@ -217,16 +203,6 @@ namespace TwitchLib.Client
         /// Fires when a whisper message is sent, returns username and message.
         /// </summary>
         public event EventHandler<OnWhisperSentArgs> OnWhisperSent;
-
-        /// <summary>
-        /// Fires when command (uses custom chat command identifier) is received, returns channel, command, ChatMessage, arguments as string, arguments as list.
-        /// </summary>
-        public event EventHandler<OnChatCommandReceivedArgs> OnChatCommandReceived;
-
-        /// <summary>
-        /// Fires when command (uses custom whisper command identifier) is received, returns command, Whispermessage.
-        /// </summary>
-        public event EventHandler<OnWhisperCommandReceivedArgs> OnWhisperCommandReceived;
 
         /// <summary>
         /// Fires when a new viewer/chatter joined the channel's chat room, returns username and channel.
@@ -426,26 +402,20 @@ namespace TwitchLib.Client
             _ircParser = new IrcParser();
         }
 
-        /// <summary>
-        /// Initializes the TwitchChatClient class.
-        /// </summary>
-        /// <param name="credentials">The credentials to use to log in.</param>
-        /// <param name="channel">The channel to connect to.</param>
-        /// <param name="chatCommandIdentifier">The identifier to be used for reading and writing commands from chat.</param>
-        /// <param name="whisperCommandIdentifier">The identifier to be used for reading and writing commands from whispers.</param>
-        /// <param name="autoReListenOnExceptions">By default, TwitchClient will silence exceptions and auto-relisten for overall stability. For debugging, you may wish to have the exception bubble up, set this to false.</param>
-        public void Initialize(ConnectionCredentials credentials, string channel = null, char chatCommandIdentifier = '!', char whisperCommandIdentifier = '!', bool autoReListenOnExceptions = true)
+		/// <summary>
+		/// Initializes the TwitchChatClient class.
+		/// </summary>
+		/// <param name="credentials">The credentials to use to log in.</param>
+		/// <param name="channel">The channel to connect to.</param>
+		/// <param name="sendMembershipCapabilityRequest">Send cap req membership?</param>
+		public void Initialize(ConnectionCredentials credentials, bool sendMembershipCapabilityRequest = true, int joinWaitTimeout = 30000, string channel = null)
         {
             Log($"TwitchLib-TwitchClient initialized, assembly version: {Assembly.GetExecutingAssembly().GetName().Version}");
             ConnectionCredentials = credentials;
             TwitchUsername = ConnectionCredentials.TwitchUsername;
-            _autoJoinChannel = channel?.ToLower();
-            if (chatCommandIdentifier != '\0')
-                _chatCommandIdentifiers.Add(chatCommandIdentifier);
-            if (whisperCommandIdentifier != '\0')
-                _whisperCommandIdentifiers.Add(whisperCommandIdentifier);
-
-            AutoReListenOnException = autoReListenOnExceptions;
+			SendMembershipCapabilityRequest = sendMembershipCapabilityRequest;
+			JoinWaitTimeout = joinWaitTimeout;
+			_autoJoinChannel = channel?.ToLower();
 
             InitializeClient();
         }
@@ -605,7 +575,6 @@ namespace TwitchLib.Client
 
             // Clear instance data
             _joinedChannelManager.Clear();
-            PreviousWhisper = null;
         }
 
         /// <summary>
@@ -617,48 +586,6 @@ namespace TwitchLib.Client
             Log($"Reconnecting to Twitch");
             _joinedChannelManager.Clear();
             _client.Reconnect();
-        }
-        #endregion
-
-        #region Command Identifiers
-        /// <summary>
-        /// Adds a character to a list of characters that if found at the start of a message, fires command received event.
-        /// </summary>
-        /// <param name="identifier">Character, that if found at start of message, fires command received event.</param>
-        public void AddChatCommandIdentifier(char identifier)
-        {
-            if (!IsInitialized) HandleNotInitialized();
-            _chatCommandIdentifiers.Add(identifier);
-        }
-
-        /// <summary>
-        /// Removes a character from a list of characters that if found at the start of a message, fires command received event.
-        /// </summary>
-        /// <param name="identifier">Command identifier to removed from identifier list.</param>
-        public void RemoveChatCommandIdentifier(char identifier)
-        {
-            if (!IsInitialized) HandleNotInitialized();
-            _chatCommandIdentifiers.Remove(identifier);
-        }
-
-        /// <summary>
-        /// Adds a character to a list of characters that if found at the start of a whisper, fires command received event.
-        /// </summary>
-        /// <param name="identifier">Character, that if found at start of message, fires command received event.</param>
-        public void AddWhisperCommandIdentifier(char identifier)
-        {
-            if (!IsInitialized) HandleNotInitialized();
-            _whisperCommandIdentifiers.Add(identifier);
-        }
-
-        /// <summary>
-        /// Removes a character to a list of characters that if found at the start of a whisper, fires command received event.
-        /// </summary>
-        /// <param name="identifier">Command identifier to removed from identifier list.</param>
-        public void RemoveWhisperCommandIdentifier(char identifier)
-        {
-            if (!IsInitialized) HandleNotInitialized();
-            _whisperCommandIdentifiers.Remove(identifier);
         }
         #endregion
 
@@ -773,16 +700,6 @@ namespace TwitchLib.Client
 
         #endregion
 
-        /// <summary>
-        /// This method allows firing the message parser with a custom irc string allowing for easy testing
-        /// </summary>
-        /// <param name="rawIrc">This should be a raw IRC message resembling one received from Twitch IRC.</param>
-        public void OnReadLineTest(string rawIrc)
-        {
-            if (!IsInitialized) HandleNotInitialized();
-            HandleIrcMessage(_ircParser.ParseIrcMessage(rawIrc));
-        }
-
         #region Client Events
 
         /// <summary>
@@ -867,7 +784,8 @@ namespace TwitchLib.Client
             _client.Send(Rfc2812.Nick(ConnectionCredentials.TwitchUsername));
             _client.Send(Rfc2812.User(ConnectionCredentials.TwitchUsername, 0, ConnectionCredentials.TwitchUsername));
 
-            _client.Send("CAP REQ twitch.tv/membership");
+			if (SendMembershipCapabilityRequest)
+				_client.Send("CAP REQ twitch.tv/membership");
             _client.Send("CAP REQ twitch.tv/commands");
             _client.Send("CAP REQ twitch.tv/tags");
 
@@ -910,7 +828,7 @@ namespace TwitchLib.Client
         {
             if (_joinTimer == null)
             {
-                _joinTimer = new System.Timers.Timer(1000);
+                _joinTimer = new System.Timers.Timer(100);
                 _joinTimer.Elapsed += JoinChannelTimeout;
                 _awaitingJoins = new List<KeyValuePair<string, DateTime>>();
             }
@@ -928,11 +846,11 @@ namespace TwitchLib.Client
         {
             if (_awaitingJoins.Any())
             {
-                List<KeyValuePair<string, DateTime>> expiredChannels = _awaitingJoins.Where(x => (DateTime.Now - x.Value).TotalSeconds > 5).ToList();
+                var expiredChannels = _awaitingJoins.Where(x => (DateTime.Now - x.Value).TotalSeconds > JoinWaitTimeout).ToList();
                 if (expiredChannels.Any())
                 {
-                    _awaitingJoins.RemoveAll(x => (DateTime.Now - x.Value).TotalSeconds > 5);
-                    foreach (KeyValuePair<string, DateTime> expiredChannel in expiredChannels)
+                    _awaitingJoins.RemoveAll(x => (DateTime.Now - x.Value).TotalSeconds > JoinWaitTimeout);
+                    foreach (var expiredChannel in expiredChannels)
                     {
                         _joinedChannelManager.RemoveJoinedChannel(expiredChannel.Key.ToLowerInvariant());
                         OnFailureToReceiveJoinConfirmation?.Invoke(this, new OnFailureToReceiveJoinConfirmationArgs { Exception = new FailureToReceiveJoinConfirmationException(expiredChannel.Key) });
@@ -1059,19 +977,7 @@ namespace TwitchLib.Client
             }
 
             ChatMessage chatMessage = new ChatMessage(TwitchUsername, ircMessage, ref _channelEmotes, WillReplaceEmotes);
-            foreach (JoinedChannel joinedChannel in JoinedChannels.Where(x => string.Equals(x.Channel, ircMessage.Channel, StringComparison.InvariantCultureIgnoreCase)))
-                joinedChannel.HandleMessage(chatMessage);
             OnMessageReceived?.Invoke(this, new OnMessageReceivedArgs { ChatMessage = chatMessage });
-
-            if (_chatCommandIdentifiers != null && _chatCommandIdentifiers.Count != 0 && !string.IsNullOrEmpty(chatMessage.Message))
-            {
-                if (_chatCommandIdentifiers.Contains(chatMessage.Message[0]))
-                {
-                    ChatCommand chatCommand = new ChatCommand(chatMessage);
-                    OnChatCommandReceived?.Invoke(this, new OnChatCommandReceivedArgs { Command = chatCommand });
-                    return;
-                }
-            }
         }
 
         /// <summary>
@@ -1271,18 +1177,7 @@ namespace TwitchLib.Client
         private void HandleWhisper(IrcMessage ircMessage)
         {
             WhisperMessage whisperMessage = new WhisperMessage(ircMessage, TwitchUsername);
-            PreviousWhisper = whisperMessage;
             OnWhisperReceived?.Invoke(this, new OnWhisperReceivedArgs { WhisperMessage = whisperMessage });
-
-            if (_whisperCommandIdentifiers != null && _whisperCommandIdentifiers.Count != 0 && !string.IsNullOrEmpty(whisperMessage.Message))
-                if (_whisperCommandIdentifiers.Contains(whisperMessage.Message[0]))
-                {
-                    WhisperCommand whisperCommand = new WhisperCommand(whisperMessage);
-                    OnWhisperCommandReceived?.Invoke(this, new OnWhisperCommandReceivedArgs { Command = whisperCommand });
-                    return;
-                }
-            OnUnaccountedFor?.Invoke(this, new OnUnaccountedForArgs { BotUsername = TwitchUsername, Channel = ircMessage.Channel, Location = "WhispergHandling", RawIRC = ircMessage.ToString() });
-            UnaccountedFor(ircMessage.ToString());
         }
 
         /// <summary>
@@ -1408,6 +1303,9 @@ namespace TwitchLib.Client
         /// <param name="includeTime">if set to <c>true</c> [include time].</param>
         private void Log(string message, bool includeDate = false, bool includeTime = false)
         {
+			if (OnLog == null)
+				return;
+
             string dateTimeStr;
             if (includeDate && includeTime)
                 dateTimeStr = $"{DateTime.UtcNow}";
@@ -1421,7 +1319,7 @@ namespace TwitchLib.Client
             else
                 _logger?.LogInformation($"[TwitchLib, {Assembly.GetExecutingAssembly().GetName().Version}] {message}");
 
-            OnLog?.Invoke(this, new OnLogArgs { BotUsername = ConnectionCredentials?.TwitchUsername, Data = message, DateTime = DateTime.UtcNow });
+            OnLog.Invoke(this, new OnLogArgs { BotUsername = ConnectionCredentials?.TwitchUsername, Data = message, DateTime = DateTime.UtcNow });
         }
 
         /// <summary>
@@ -1432,7 +1330,10 @@ namespace TwitchLib.Client
         /// <param name="includeTime">if set to <c>true</c> [include time].</param>
         private void LogError(string message, bool includeDate = false, bool includeTime = false)
         {
-            string dateTimeStr;
+			if (OnLog == null)
+				return;
+
+			string dateTimeStr;
             if (includeDate && includeTime)
                 dateTimeStr = $"{DateTime.UtcNow}";
             else if (includeDate)
@@ -1445,7 +1346,7 @@ namespace TwitchLib.Client
             else
                 _logger?.LogError($"[TwitchLib, {Assembly.GetExecutingAssembly().GetName().Version}] {message}");
 
-            OnLog?.Invoke(this, new OnLogArgs { BotUsername = ConnectionCredentials?.TwitchUsername, Data = message, DateTime = DateTime.UtcNow });
+            OnLog.Invoke(this, new OnLogArgs { BotUsername = ConnectionCredentials?.TwitchUsername, Data = message, DateTime = DateTime.UtcNow });
         }
 
         /// <summary>

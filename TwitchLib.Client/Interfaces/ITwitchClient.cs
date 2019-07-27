@@ -12,11 +12,6 @@ namespace TwitchLib.Client.Interfaces
     public interface ITwitchClient
     {
         /// <summary>
-        /// Gets or sets a value indicating whether [automatic re listen on exception].
-        /// </summary>
-        /// <value><c>true</c> if [automatic re listen on exception]; otherwise, <c>false</c>.</value>
-        bool AutoReListenOnException { get; set; }
-        /// <summary>
         /// Gets the channel emotes.
         /// </summary>
         /// <value>The channel emotes.</value>
@@ -51,11 +46,7 @@ namespace TwitchLib.Client.Interfaces
         /// </summary>
         /// <value><c>true</c> if [override being hosted check]; otherwise, <c>false</c>.</value>
         bool OverrideBeingHostedCheck { get; set; }
-        /// <summary>
-        /// Gets the previous whisper.
-        /// </summary>
-        /// <value>The previous whisper.</value>
-        WhisperMessage PreviousWhisper { get; }
+
         /// <summary>
         /// Gets the twitch username.
         /// </summary>
@@ -83,10 +74,6 @@ namespace TwitchLib.Client.Interfaces
         /// Occurs when [on chat color changed].
         /// </summary>
         event EventHandler<OnChatColorChangedArgs> OnChatColorChanged;
-        /// <summary>
-        /// Occurs when [on chat command received].
-        /// </summary>
-        event EventHandler<OnChatCommandReceivedArgs> OnChatCommandReceived;
         /// <summary>
         /// Occurs when [on connected].
         /// </summary>
@@ -196,10 +183,6 @@ namespace TwitchLib.Client.Interfaces
         /// </summary>
         event EventHandler<OnUserTimedoutArgs> OnUserTimedout;
         /// <summary>
-        /// Occurs when [on whisper command received].
-        /// </summary>
-        event EventHandler<OnWhisperCommandReceivedArgs> OnWhisperCommandReceived;
-        /// <summary>
         /// Occurs when [on whisper received].
         /// </summary>
         event EventHandler<OnWhisperReceivedArgs> OnWhisperReceived;
@@ -245,42 +228,20 @@ namespace TwitchLib.Client.Interfaces
         /// </summary>
         event EventHandler<OnRitualNewChatterArgs> OnRitualNewChatter;
 
-        /// <summary>
-        /// Initializes the specified credentials.
-        /// </summary>
-        /// <param name="credentials">The credentials.</param>
-        /// <param name="channel">The channel.</param>
-        /// <param name="chatCommandIdentifier">The chat command identifier.</param>
-        /// <param name="whisperCommandIdentifier">The whisper command identifier.</param>
-        /// <param name="autoReListenOnExceptions">if set to <c>true</c> [automatic re listen on exceptions].</param>
-        void Initialize(ConnectionCredentials credentials, string channel = null, char chatCommandIdentifier = '!', char whisperCommandIdentifier = '!', bool autoReListenOnExceptions = true);
+		/// <summary>
+		/// Initializes the specified credentials.
+		/// </summary>
+		/// <param name="credentials">The credentials.</param>
+		/// <param name="channel">The channel.</param>
+		/// <param name="requestMembershipCapabilities"></param>
+		/// <param name="joinWaitTimeout"></param>
+		void Initialize(ConnectionCredentials credentials, bool requestMembershipCapabilities = true, int joinWaitTimeout = 30000, string channel = null);
 
         /// <summary>
         /// Sets the connection credentials.
         /// </summary>
         /// <param name="credentials">The credentials.</param>
         void SetConnectionCredentials(ConnectionCredentials credentials);
-
-        /// <summary>
-        /// Adds the chat command identifier.
-        /// </summary>
-        /// <param name="identifier">The identifier.</param>
-        void AddChatCommandIdentifier(char identifier);
-        /// <summary>
-        /// Adds the whisper command identifier.
-        /// </summary>
-        /// <param name="identifier">The identifier.</param>
-        void AddWhisperCommandIdentifier(char identifier);
-        /// <summary>
-        /// Removes the chat command identifier.
-        /// </summary>
-        /// <param name="identifier">The identifier.</param>
-        void RemoveChatCommandIdentifier(char identifier);
-        /// <summary>
-        /// Removes the whisper command identifier.
-        /// </summary>
-        /// <param name="identifier">The identifier.</param>
-        void RemoveWhisperCommandIdentifier(char identifier);
 
         /// <summary>
         /// Connects this instance.
@@ -331,12 +292,6 @@ namespace TwitchLib.Client.Interfaces
         /// <param name="channelId">The channel identifier.</param>
         /// <param name="roomId">The room identifier.</param>
         void LeaveRoom(string channelId, string roomId);
-
-        /// <summary>
-        /// Called when [read line test].
-        /// </summary>
-        /// <param name="rawIrc">The raw irc.</param>
-        void OnReadLineTest(string rawIrc);
 
         /// <summary>
         /// Sends the message.
