@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using TwitchLib.Client.Enums;
 using TwitchLib.Client.Enums.Internal;
@@ -55,13 +56,10 @@ namespace TwitchLib.Client
         /// </summary>
         private string _autoJoinChannel;
         /// <summary>
-        /// The currently joining channels
-        /// </summary>
-        private bool _currentlyJoiningChannels;
-        /// <summary>
         /// The join timer
         /// </summary>
         private System.Timers.Timer _joinTimer;
+		private int _joinTimerRefs = 0;
         /// <summary>
         /// The awaiting joins
         /// </summary>
@@ -624,7 +622,7 @@ namespace TwitchLib.Client
             if (JoinedChannels.FirstOrDefault(x => x.Channel.ToLower() == channel && !overrideCheck) != null)
                 return;
             _joinChannelQueue.Enqueue(new JoinedChannel(channel));
-            if (!_currentlyJoiningChannels && queueJoins)
+            if (queueJoins)
                 QueueingJoinCheck();
         }
 
@@ -642,7 +640,7 @@ namespace TwitchLib.Client
 			if (JoinedChannels.FirstOrDefault(x => x.Channel.ToLower() == $"chatrooms:{channelId}:{roomId}" && !overrideCheck) != null)
                 return;
             _joinChannelQueue.Enqueue(new JoinedChannel($"chatrooms:{channelId}:{roomId}"));
-            if (!_currentlyJoiningChannels && queueJoins)
+            if (queueJoins)
                 QueueingJoinCheck();
         }
         /// <summary>
@@ -809,8 +807,6 @@ namespace TwitchLib.Client
         {
             if (_joinChannelQueue.Count > 0)
             {
-                _currentlyJoiningChannels = true;
-
 				while (_joinChannelQueue.Count != 0) {
 					var curLine = new StringBuilder();
 					// Sorry RFC2812
@@ -850,7 +846,8 @@ namespace TwitchLib.Client
                 _awaitingJoins = new List<KeyValuePair<string, DateTime>>();
             }
             _awaitingJoins.Add(new KeyValuePair<string, DateTime>(channel, DateTime.Now));
-            if (!_joinTimer.Enabled)
+			Interlocked.Increment(ref _joinTimerRefs);
+			if (!_joinTimer.Enabled)
                 _joinTimer.Start();
         }
 
@@ -876,8 +873,9 @@ namespace TwitchLib.Client
             }
             else
             {
-                _joinTimer.Stop();
-                _currentlyJoiningChannels = false;
+				Interlocked.Decrement(ref _joinTimerRefs);
+				if (_joinTimerRefs == 0)
+					_joinTimer.Stop();
                 QueueingJoinCheck();
             }
         }
@@ -1183,7 +1181,6 @@ namespace TwitchLib.Client
         /// </summary>
         private void Handle366()
         {
-            _currentlyJoiningChannels = false;
             QueueingJoinCheck();
         }
 
