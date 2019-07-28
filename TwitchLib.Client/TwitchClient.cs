@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
+using System.Text;
 using System.Threading.Tasks;
 using TwitchLib.Client.Enums;
 using TwitchLib.Client.Enums.Internal;
@@ -615,7 +616,7 @@ namespace TwitchLib.Client
         /// </summary>
         /// <param name="channel">The channel to join.</param>
         /// <param name="overrideCheck">Override a join check.</param>
-        public void JoinChannel(string channel, bool overrideCheck = false)
+        public void JoinChannel(string channel, bool overrideCheck = false, bool queueJoins = true)
         {
             if (!IsInitialized) HandleNotInitialized();
             if (!IsConnected) HandleNotConnected();
@@ -623,7 +624,7 @@ namespace TwitchLib.Client
             if (JoinedChannels.FirstOrDefault(x => x.Channel.ToLower() == channel && !overrideCheck) != null)
                 return;
             _joinChannelQueue.Enqueue(new JoinedChannel(channel));
-            if (!_currentlyJoiningChannels)
+            if (!_currentlyJoiningChannels && queueJoins)
                 QueueingJoinCheck();
         }
 
@@ -633,14 +634,15 @@ namespace TwitchLib.Client
         /// <param name="channelId">The channel identifier.</param>
         /// <param name="roomId">The room identifier.</param>
         /// <param name="overrideCheck">if set to <c>true</c> [override check].</param>
-        public void JoinRoom(string channelId, string roomId, bool overrideCheck = false)
+        public void JoinRoom(string channelId, string roomId, bool overrideCheck = false, bool queueJoins = true)
         {
             if (!IsInitialized) HandleNotInitialized();
-            // Check to see if client is already in channel
-            if (JoinedChannels.FirstOrDefault(x => x.Channel.ToLower() == $"chatrooms:{channelId}:{roomId}" && !overrideCheck) != null)
+			if (!IsConnected) HandleNotConnected();
+			// Check to see if client is already in channel
+			if (JoinedChannels.FirstOrDefault(x => x.Channel.ToLower() == $"chatrooms:{channelId}:{roomId}" && !overrideCheck) != null)
                 return;
             _joinChannelQueue.Enqueue(new JoinedChannel($"chatrooms:{channelId}:{roomId}"));
-            if (!_currentlyJoiningChannels)
+            if (!_currentlyJoiningChannels && queueJoins)
                 QueueingJoinCheck();
         }
         /// <summary>
@@ -808,13 +810,27 @@ namespace TwitchLib.Client
             if (_joinChannelQueue.Count > 0)
             {
                 _currentlyJoiningChannels = true;
-                JoinedChannel channelToJoin = _joinChannelQueue.Dequeue();
-                Log($"Joining channel: {channelToJoin.Channel}");
-                // important we set channel to lower case when sending join message
-                _client.Send(Rfc2812.Join($"#{channelToJoin.Channel.ToLower()}"));
-                _joinedChannelManager.AddJoinedChannel(new JoinedChannel(channelToJoin.Channel));
-                StartJoinedChannelTimer(channelToJoin.Channel);
-            }
+
+				while (_joinChannelQueue.Count != 0) {
+					var curLine = new StringBuilder();
+					// Sorry RFC2812
+					curLine.Append("JOIN");
+
+					while (_joinChannelQueue.Count != 0) {
+						if (curLine.Length + _joinChannelQueue.Peek().Channel.Length + 2 >= 4096) {
+							break;
+						}
+
+						JoinedChannel channelToJoin = _joinChannelQueue.Dequeue();
+						Log($"Joining channel: {channelToJoin.Channel}");
+						// important we set channel to lower case when sending join message
+						curLine.Append($" #{channelToJoin.Channel.ToLower()}");
+						_joinedChannelManager.AddJoinedChannel(new JoinedChannel(channelToJoin.Channel));
+						StartJoinedChannelTimer(channelToJoin.Channel);
+					}
+					_client.Send(curLine.ToString());
+				}
+			}
             else
             {
                 Log("Finished channel joining queue.");

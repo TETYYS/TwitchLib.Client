@@ -269,14 +269,14 @@ namespace TwitchLib.Client.Interfaces
         /// </summary>
         /// <param name="channel">The channel.</param>
         /// <param name="overrideCheck">if set to <c>true</c> [override check].</param>
-        void JoinChannel(string channel, bool overrideCheck = false);
+        void JoinChannel(string channel, bool overrideCheck = false, bool queueJoins = true);
         /// <summary>
         /// Joins the room.
         /// </summary>
         /// <param name="channelId">The channel identifier.</param>
         /// <param name="roomId">The room identifier.</param>
         /// <param name="overrideCheck">if set to <c>true</c> [override check].</param>
-        void JoinRoom(string channelId, string roomId, bool overrideCheck = false);
+        void JoinRoom(string channelId, string roomId, bool overrideCheck = false, bool queueJoins = true);
         /// <summary>
         /// Leaves the channel.
         /// </summary>
