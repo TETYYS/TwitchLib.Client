@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
+using System.Threading.Tasks;
 using TwitchLib.Client.Enums;
 using TwitchLib.Client.Enums.Internal;
 using TwitchLib.Client.Events;
@@ -553,20 +554,20 @@ namespace TwitchLib.Client
         /// <summary>
         /// Start connecting to the Twitch IRC chat.
         /// </summary>
-        public void Connect()
+        public async Task ConnectAsync()
         {
             if (!IsInitialized) HandleNotInitialized();
             Log($"Connecting to: {ConnectionCredentials.TwitchWebsocketURI}");
 
-            _client.Open();
+            await _client.Open();
 
             Log("Should be connected!");
         }
 
-        /// <summary>
-        /// Start disconnecting from the Twitch IRC chat.
-        /// </summary>
-        public void Disconnect()
+		/// <summary>
+		/// Start disconnecting from the Twitch IRC chat.
+		/// </summary>
+		public void Disconnect()
         {
             Log("Disconnect Twitch Chat Client...");
 

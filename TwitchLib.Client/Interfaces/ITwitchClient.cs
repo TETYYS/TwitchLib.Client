@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using TwitchLib.Client.Events;
 using TwitchLib.Client.Models;
 using TwitchLib.Communication.Events;
@@ -246,7 +247,7 @@ namespace TwitchLib.Client.Interfaces
         /// <summary>
         /// Connects this instance.
         /// </summary>
-        void Connect();
+        Task ConnectAsync();
         /// <summary>
         /// Disconnects this instance.
         /// </summary>
