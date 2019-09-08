@@ -433,7 +433,7 @@ namespace TwitchLib.Client
                         _client = new TcpClient();
                         break;
                     case ClientProtocol.WebSocket:
-                        _client = new WebSocketClient();
+                        throw new Exception("Use TCP");
                         break;
                 }
             }
