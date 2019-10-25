@@ -24,7 +24,7 @@ namespace TwitchLib.Client.Models
                 // Message contains multiple different emotes, first parse by unique emotes: 28087:15-21/25:5-9,28-32
                 foreach (var emoteData in emoteSetData.Split('/'))
                 {
-                    var emoteId = int.Parse(emoteData.Split(':')[0]);
+                    var emoteId = emoteData.Split(':')[0];
                     if (emoteData.Contains(","))
                     {
                         // Multiple copies of a single emote: 25:5-9,28-32
@@ -41,7 +41,7 @@ namespace TwitchLib.Client.Models
             }
             else
             {
-                var emoteId = int.Parse(emoteSetData.Split(':')[0]);
+                var emoteId = emoteSetData.Split(':')[0];
                 // Message contains a single, or multiple of the same emote
                 if (emoteSetData.Contains(","))
                 {
@@ -56,7 +56,7 @@ namespace TwitchLib.Client.Models
             }
         }
 
-        private void AddEmote(string emoteData, int emoteId, string message, bool single = false)
+        private void AddEmote(string emoteData, string emoteId, string message, bool single = false)
         {
             int startIndex = -1, endIndex = -1;
             if (single)
@@ -77,7 +77,7 @@ namespace TwitchLib.Client.Models
         public class Emote
         {
             /// <summary>Twitch-assigned emote Id.</summary>
-            public int Id { get; }
+            public string Id { get; }
             /// <summary>The name of the emote. For example, if the message was "This is Kappa test.", the name would be 'Kappa'.</summary>
             public string Name { get; }
             /// <summary>Character starting index. For example, if the message was "This is Kappa test.", the start index would be 8 for 'Kappa'.</summary>
@@ -94,7 +94,7 @@ namespace TwitchLib.Client.Models
             /// <param name="name"></param>
             /// <param name="emoteStartIndex"></param>
             /// <param name="emoteEndIndex"></param>
-            public Emote(int emoteId, string name, int emoteStartIndex, int emoteEndIndex)
+            public Emote(string emoteId, string name, int emoteStartIndex, int emoteEndIndex)
             {
                 Id = emoteId;
                 Name = name;
