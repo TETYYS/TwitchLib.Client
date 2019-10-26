@@ -810,21 +810,21 @@ namespace TwitchLib.Client
 				while (_joinChannelQueue.Count != 0) {
 					var curLine = new StringBuilder();
 					// Sorry RFC2812
-					curLine.Append("JOIN");
+					curLine.Append("JOIN ");
 
 					while (_joinChannelQueue.Count != 0) {
 						if (curLine.Length + _joinChannelQueue.Peek().Channel.Length + 2 >= 4096) {
 							break;
 						}
 
-						JoinedChannel channelToJoin = _joinChannelQueue.Dequeue();
+						var channelToJoin = _joinChannelQueue.Dequeue();
 						Log($"Joining channel: {channelToJoin.Channel}");
 						// important we set channel to lower case when sending join message
-						curLine.Append($" #{channelToJoin.Channel.ToLower()}");
+						curLine.Append($"#{channelToJoin.Channel.ToLower()},");
 						_joinedChannelManager.AddJoinedChannel(new JoinedChannel(channelToJoin.Channel));
 						StartJoinedChannelTimer(channelToJoin.Channel);
 					}
-					_client.Send(curLine.ToString());
+                    _client.Send(curLine.ToString()[..^1]);
 				}
 			}
             else
