@@ -46,6 +46,7 @@ namespace TwitchLib.Client.Models
         public int SubscribedMonthCount { get; }    
 		/// <summary>TMI message timestamp.</sumarry>
 		public long TmiSentTs { get; }
+        public Dictionary<string, string> RawTags;
 
         //Example IRC message: @badges=moderator/1,warcraft/alliance;color=;display-name=Swiftyspiffyv4;emotes=;mod=1;room-id=40876073;subscriber=0;turbo=0;user-id=103325214;user-type=mod :swiftyspiffyv4!swiftyspiffyv4@swiftyspiffyv4.tmi.twitch.tv PRIVMSG #swiftyspiffy :asd
         /// <summary>Constructor for ChatMessage object.</summary>
@@ -59,6 +60,7 @@ namespace TwitchLib.Client.Models
             RawIrcMessage = ircMessage.ToString();
             Message = ircMessage.Message;
             _emoteCollection = emoteCollection;
+            RawTags = ircMessage.Tags;
 
             Username = ircMessage.User;
             Channel = ircMessage.Channel;
