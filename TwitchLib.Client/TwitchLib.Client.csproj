@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
+    <TargetFramework>netstandard2.1</TargetFramework>
     <PackageId>TwitchLib.Client</PackageId>
     <Version>3.0.4</Version>
     <Description>Client component of TwitchLib. This component allows you to access Twitch chat and whispers, as well as the events that are sent over this connection.</Description>
