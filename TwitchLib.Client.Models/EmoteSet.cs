@@ -59,16 +59,18 @@ namespace TwitchLib.Client.Models
         private void AddEmote(string emoteData, string emoteId, string message, bool single = false)
         {
             int startIndex = -1, endIndex = -1;
-            if (single)
-            {
-                startIndex = int.Parse(emoteData.Split(':')[1].Split('-')[0]);
-                endIndex = int.Parse(emoteData.Split(':')[1].Split('-')[1]);
-            } else
-            {
-                startIndex = int.Parse(emoteData.Split('-')[0]);
-                endIndex = int.Parse(emoteData.Split('-')[1]);
+            try {
+                if (single) {
+                    startIndex = int.Parse(emoteData.Split(':')[1].Split('-')[0]);
+                    endIndex = int.Parse(emoteData.Split(':')[1].Split('-')[1]);
+                } else {
+                    startIndex = int.Parse(emoteData.Split('-')[0]);
+                    endIndex = int.Parse(emoteData.Split('-')[1]);
+                }
+                Emotes.Add(new Emote(emoteId, message.Substring(startIndex, (endIndex - startIndex) + 1), startIndex, endIndex));
+            } catch (System.Exception ex) {
+                throw new System.Exception($"Failed to add emote: {emoteData} {emoteId} {message} {(single ? "true" : "false")}", ex);
             }
-            Emotes.Add(new Emote(emoteId, message.Substring(startIndex, (endIndex - startIndex) + 1), startIndex, endIndex));
         }
 
         /// <summary>

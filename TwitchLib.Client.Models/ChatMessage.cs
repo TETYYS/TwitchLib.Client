@@ -124,7 +124,11 @@ namespace TwitchLib.Client.Models
                         IsTurbo = Common.Helpers.ConvertToBool(tagValue);
                         break;
 					case Tags.TmiSentTs:
-						TmiSentTs = long.Parse(tagValue);
+                        try {
+                            TmiSentTs = long.Parse(tagValue);
+                        } catch (Exception ex) {
+                            throw new Exception($"Failed to parse tmi-sent-ts: {tagValue} {ircMessage.ToString()}", ex);
+                        }
 						break;
                     case Tags.UserId:
                         UserId = tagValue;
