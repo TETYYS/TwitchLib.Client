@@ -65,6 +65,9 @@ namespace TwitchLib.Client
         /// </summary>
         private List<KeyValuePair<string, DateTime>> _awaitingJoins;
 
+        private System.Timers.Timer _pingTimer;
+        private DateTime _lastPong;
+
         /// <summary>
         /// The irc parser
         /// </summary>
@@ -145,6 +148,8 @@ namespace TwitchLib.Client
 		public bool SendMembershipCapabilityRequest { get; set; }
 
 		public int JoinWaitTimeout { get; set; }
+
+        public int PingTimeout { get; set; }
 
 		#endregion
 
@@ -408,13 +413,14 @@ namespace TwitchLib.Client
 		/// <param name="credentials">The credentials to use to log in.</param>
 		/// <param name="channel">The channel to connect to.</param>
 		/// <param name="sendMembershipCapabilityRequest">Send cap req membership?</param>
-		public void Initialize(ConnectionCredentials credentials, bool sendMembershipCapabilityRequest = true, int joinWaitTimeout = 30000, string channel = null)
+		public void Initialize(ConnectionCredentials credentials, bool sendMembershipCapabilityRequest = true, int joinWaitTimeout = 30000, int pingTimeout = 60000, string channel = null)
         {
             Log($"TwitchLib-TwitchClient initialized, assembly version: {Assembly.GetExecutingAssembly().GetName().Version}");
             ConnectionCredentials = credentials;
             TwitchUsername = ConnectionCredentials.TwitchUsername;
 			SendMembershipCapabilityRequest = sendMembershipCapabilityRequest;
 			JoinWaitTimeout = joinWaitTimeout;
+            PingTimeout = pingTimeout;
 			_autoJoinChannel = channel?.ToLower();
 
             InitializeClient();
@@ -558,6 +564,10 @@ namespace TwitchLib.Client
             if (!IsInitialized) HandleNotInitialized();
             Log($"Connecting to: {ConnectionCredentials.TwitchWebsocketURI}");
 
+            _joinedChannelManager.Clear();
+            _pingTimer = new System.Timers.Timer(PingTimeout);
+            _pingTimer.Elapsed += PingTimer;
+            _pingTimer.Start();
             await _client.Open();
 
             Log("Should be connected!");
@@ -574,18 +584,20 @@ namespace TwitchLib.Client
             _client.Close();
 
             // Clear instance data
+            _pingTimer.Close();
             _joinedChannelManager.Clear();
         }
 
         /// <summary>
         /// Start reconnecting to the Twitch IRC chat.
         /// </summary>
-        public void Reconnect()
+        public async Task Reconnect()
         {
             if (!IsInitialized) HandleNotInitialized();
             Log($"Reconnecting to Twitch");
+            _pingTimer.Close();
             _joinedChannelManager.Clear();
-            _client.Reconnect();
+            await _client.Reconnect();
         }
         #endregion
 
@@ -627,23 +639,6 @@ namespace TwitchLib.Client
         }
 
         /// <summary>
-        /// Joins the room.
-        /// </summary>
-        /// <param name="channelId">The channel identifier.</param>
-        /// <param name="roomId">The room identifier.</param>
-        /// <param name="overrideCheck">if set to <c>true</c> [override check].</param>
-        public void JoinRoom(string channelId, string roomId, bool overrideCheck = false, bool queueJoins = true)
-        {
-            if (!IsInitialized) HandleNotInitialized();
-			if (!IsConnected) HandleNotConnected();
-			// Check to see if client is already in channel
-			if (JoinedChannels.FirstOrDefault(x => x.Channel.ToLower() == $"chatrooms:{channelId}:{roomId}" && !overrideCheck) != null)
-                return;
-            _joinChannelQueue.Enqueue(new JoinedChannel($"chatrooms:{channelId}:{roomId}"));
-            if (queueJoins)
-                QueueingJoinCheck();
-        }
-        /// <summary>
         /// Returns a JoinedChannel object using a passed string/&gt;.
         /// </summary>
         /// <param name="channel">String channel to search for.</param>
@@ -671,21 +666,6 @@ namespace TwitchLib.Client
             JoinedChannel joinedChannel = _joinedChannelManager.GetJoinedChannel(channel);
             if (joinedChannel != null)
                 _client.Send(Rfc2812.Part($"#{channel}"));
-        }
-
-        /// <summary>
-        /// Leaves the room.
-        /// </summary>
-        /// <param name="channelId">The channel identifier.</param>
-        /// <param name="roomId">The room identifier.</param>
-        public void LeaveRoom(string channelId, string roomId)
-        {
-            if (!IsInitialized) HandleNotInitialized();
-            string room = $"chatrooms:{channelId}:{roomId}";
-            Log($"Leaving channel: {room}");
-            JoinedChannel joinedChannel = _joinedChannelManager.GetJoinedChannel(room);
-            if (joinedChannel != null)
-                _client.Send(Rfc2812.Part($"#{room}"));
         }
 
         /// <summary>
@@ -740,8 +720,9 @@ namespace TwitchLib.Client
         /// <param name="e">The <see cref="OnDisconnectedEventArgs" /> instance containing the event data.</param>
         private void _client_OnDisconnected(object sender, OnDisconnectedEventArgs e)
         {
-            OnDisconnected?.Invoke(sender, e);
+            _pingTimer.Close();
             _joinedChannelManager.Clear();
+            OnDisconnected?.Invoke(sender, e);
         }
 
         /// <summary>
@@ -851,6 +832,15 @@ namespace TwitchLib.Client
                 _joinTimer.Start();
         }
 
+        private void PingTimer(object sender, System.Timers.ElapsedEventArgs e)
+        {
+            if ((DateTime.UtcNow - _lastPong).TotalMilliseconds > PingTimeout) {
+                _pingTimer.Stop();
+                _client.Close(true);
+            } else
+                _pingTimer.Interval = (_lastPong.AddSeconds(PingTimeout) - DateTime.UtcNow).TotalMilliseconds;
+        }
+
         /// <summary>
         /// Joins the channel timeout.
         /// </summary>
@@ -906,6 +896,7 @@ namespace TwitchLib.Client
                 case IrcCommand.Ping:
                     if (!DisableAutoPong)
                         SendRaw("PONG");
+                    _lastPong = DateTime.UtcNow;
                     return;
                 case IrcCommand.Pong:
                     return;

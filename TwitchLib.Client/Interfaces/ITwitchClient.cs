@@ -236,7 +236,7 @@ namespace TwitchLib.Client.Interfaces
 		/// <param name="channel">The channel.</param>
 		/// <param name="requestMembershipCapabilities"></param>
 		/// <param name="joinWaitTimeout"></param>
-		void Initialize(ConnectionCredentials credentials, bool requestMembershipCapabilities = true, int joinWaitTimeout = 30000, string channel = null);
+		void Initialize(ConnectionCredentials credentials, bool requestMembershipCapabilities = true, int joinWaitTimeout = 30000, int pingTimeout = 60000, string channel = null);
 
         /// <summary>
         /// Sets the connection credentials.
@@ -255,7 +255,7 @@ namespace TwitchLib.Client.Interfaces
         /// <summary>
         /// Reconnects this instance.
         /// </summary>
-        void Reconnect();
+        Task Reconnect();
 
         /// <summary>
         /// Gets the joined channel.
@@ -270,13 +270,7 @@ namespace TwitchLib.Client.Interfaces
         /// <param name="channel">The channel.</param>
         /// <param name="overrideCheck">if set to <c>true</c> [override check].</param>
         void JoinChannel(string channel, bool overrideCheck = false, bool queueJoins = true);
-        /// <summary>
-        /// Joins the room.
-        /// </summary>
-        /// <param name="channelId">The channel identifier.</param>
-        /// <param name="roomId">The room identifier.</param>
-        /// <param name="overrideCheck">if set to <c>true</c> [override check].</param>
-        void JoinRoom(string channelId, string roomId, bool overrideCheck = false, bool queueJoins = true);
+
         /// <summary>
         /// Leaves the channel.
         /// </summary>
@@ -287,12 +281,6 @@ namespace TwitchLib.Client.Interfaces
         /// </summary>
         /// <param name="channel">The channel.</param>
         void LeaveChannel(string channel);
-        /// <summary>
-        /// Leaves the room.
-        /// </summary>
-        /// <param name="channelId">The channel identifier.</param>
-        /// <param name="roomId">The room identifier.</param>
-        void LeaveRoom(string channelId, string roomId);
 
         /// <summary>
         /// Sends the message.
