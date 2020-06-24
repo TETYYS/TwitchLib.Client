@@ -413,7 +413,7 @@ namespace TwitchLib.Client
 		/// <param name="credentials">The credentials to use to log in.</param>
 		/// <param name="channel">The channel to connect to.</param>
 		/// <param name="sendMembershipCapabilityRequest">Send cap req membership?</param>
-		public void Initialize(ConnectionCredentials credentials, bool sendMembershipCapabilityRequest = true, int joinWaitTimeout = 30000, int pingTimeout = 60000, string channel = null)
+		public void Initialize(ConnectionCredentials credentials, bool sendMembershipCapabilityRequest = true, int joinWaitTimeout = 30000, int pingTimeout = 61000 * 5, string channel = null)
         {
             Log($"TwitchLib-TwitchClient initialized, assembly version: {Assembly.GetExecutingAssembly().GetName().Version}");
             ConnectionCredentials = credentials;
