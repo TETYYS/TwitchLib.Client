@@ -838,7 +838,7 @@ namespace TwitchLib.Client
                 _pingTimer.Stop();
                 _client.Close(true);
             } else
-                _pingTimer.Interval = (_lastPong.AddSeconds(PingTimeout) - DateTime.UtcNow).TotalMilliseconds;
+                _pingTimer.Interval = (_lastPong.AddMilliseconds(PingTimeout) - DateTime.UtcNow).TotalMilliseconds;
         }
 
         /// <summary>
