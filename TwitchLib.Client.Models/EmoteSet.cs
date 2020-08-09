@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace TwitchLib.Client.Models
 {
@@ -19,58 +20,40 @@ namespace TwitchLib.Client.Models
             RawEmoteSetString = emoteSetData;
             if (string.IsNullOrEmpty(emoteSetData))
                 return;
-            if (emoteSetData.Contains("/"))
-            {
-                // Message contains multiple different emotes, first parse by unique emotes: 28087:15-21/25:5-9,28-32
-                foreach (var emoteData in emoteSetData.Split('/'))
-                {
-                    var emoteId = emoteData.Split(':')[0];
-                    if (emoteData.Contains(","))
-                    {
-                        // Multiple copies of a single emote: 25:5-9,28-32
-                        foreach (var emote in emoteData.Replace($"{emoteId}:", "").Split(','))
-                            AddEmote(emote, emoteId, message);
 
-                    }
-                    else
-                    {
-                        // Single copy of single emote: 25:5-9/28087:16-22
-                        AddEmote(emoteData, emoteId, message, true);
-                    }
-                }
-            }
-            else
+            foreach (var emoteData in emoteSetData.Split('/'))
             {
-                var emoteId = emoteSetData.Split(':')[0];
-                // Message contains a single, or multiple of the same emote
-                if (emoteSetData.Contains(","))
-                {
-                    // Multiple copies of a single emote: 25:5-9,28-32
-                    foreach (var emote in emoteSetData.Replace($"{emoteId}:", "").Split(','))
-                        AddEmote(emote, emoteId, message);
-                } else
-                {
-                    // Single copy of single emote: 25:5-9
-                    AddEmote(emoteSetData, emoteId, message, true);
-                }
+                var imageIdSeperatorIndex = emoteData.IndexOf(':');
+                if (imageIdSeperatorIndex == -1)
+                    continue;
+
+                var emoteId = emoteData.Substring(0, imageIdSeperatorIndex);
+
+                // Get rid of emote ID and : at the start
+                foreach (var emote in emoteData.Substring(imageIdSeperatorIndex + 1).Split(','))
+                    AddEmote(emote, emoteId, message);
             }
         }
 
-        private void AddEmote(string emoteData, string emoteId, string message, bool single = false)
+        private void AddEmote(string emoteData, string emoteId, string message)
         {
-            int startIndex = -1, endIndex = -1;
-            try {
-                if (single) {
-                    startIndex = int.Parse(emoteData.Split(':')[1].Split('-')[0]);
-                    endIndex = int.Parse(emoteData.Split(':')[1].Split('-')[1]);
-                } else {
-                    startIndex = int.Parse(emoteData.Split('-')[0]);
-                    endIndex = int.Parse(emoteData.Split('-')[1]);
-                }
-                Emotes.Add(new Emote(emoteId, message.Substring(startIndex, (endIndex - startIndex) + 1), startIndex, endIndex));
-            } catch (System.Exception ex) {
-                throw new System.Exception($"Failed to add emote: {emoteData} {emoteId} {message} {(single ? "true" : "false")}", ex);
-            }
+            // emoteData: 43-49
+            // emoteId: 451521
+
+            var split = emoteData.Split('-');
+
+            if (split.Length != 2)
+                return;
+
+			if (!Int32.TryParse(split[0], out var startIndex))
+				return;
+			if (!Int32.TryParse(split[1], out var endIndex))
+                return;
+
+            if (endIndex >= message.Length)
+                return;
+
+            Emotes.Add(new Emote(emoteId, message.Substring(startIndex, endIndex - startIndex + 1), startIndex, endIndex));
         }
 
         /// <summary>
