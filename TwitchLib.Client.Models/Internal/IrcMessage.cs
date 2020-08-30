@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Text;
 using TwitchLib.Client.Enums.Internal;
 
@@ -9,9 +10,26 @@ namespace TwitchLib.Client.Models.Internal
         /// <summary>
         /// The channel the message was sent in
         /// </summary>
-        public string Channel => Params.StartsWith("#") ? Params.Remove(0, 1) : Params;
+        public string Channel {
+            get {
+                if (_parameters?.Length == 0)
+                    return "";
 
-        public string Params => _parameters != null && _parameters.Length > 0 ? _parameters[0] : "";
+                return _parameters[0].StartsWith("#") ? _parameters[0][1..] : _parameters[0];
+            }
+        }
+
+        public string Params {
+            get {
+                if (_parameters?.Length == 0)
+                    return "";
+
+                if (_parameters.Length == 1)
+                    return _parameters[0];
+
+                return String.Join(" ", _parameters);
+			}
+        }
 
         /// <summary>
         /// Message itself

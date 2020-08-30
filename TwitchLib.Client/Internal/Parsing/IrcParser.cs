@@ -1,4 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+
 using TwitchLib.Client.Enums.Internal;
 using TwitchLib.Client.Models.Internal;
 
@@ -9,6 +12,7 @@ namespace TwitchLib.Client.Internal.Parsing
     /// </summary>
     public class IrcParser
     {
+        readonly char[] tagSeperators = new[] { ';', '=' };
 
         /// <summary>
         /// Builds an IrcMessage from a raw string
@@ -17,85 +21,106 @@ namespace TwitchLib.Client.Internal.Parsing
         /// <returns>IrcMessage object</returns>
         public IrcMessage ParseIrcMessage(string raw)
         {
-            Dictionary<string, string> tagDict = new Dictionary<string, string>();
+            IrcCommand command = IrcCommand.Unknown;
+            Dictionary<string, string> tagDict = new Dictionary<string, string>(16);
+            string[] parameters = Array.Empty<string>();
+            string prefix = String.Empty;
 
-            ParserState state = ParserState.STATE_NONE;
-            int[] starts = new[] { 0, 0, 0, 0, 0, 0 };
-            int[] lens = new[] { 0, 0, 0, 0, 0, 0 };
-            for (int i = 0; i < raw.Length; ++i)
-            {
-                lens[(int)state] = i - starts[(int)state] - 1;
-                if (state == ParserState.STATE_NONE && raw[i] == '@')
-                {
-                    state = ParserState.STATE_V3;
-                    starts[(int)state] = ++i;
+            int nextPart;
 
-                    int start = i;
-                    string key = null;
-                    for (; i < raw.Length; ++i)
-                    {
-                        if (raw[i] == '=')
-                        {
-                            key = raw.Substring(start, i - start);
-                            start = i + 1;
+            if (raw[0] == '@') {
+                // v3 tags
+
+                nextPart = raw.IndexOf(' ');
+                if (nextPart == -1)
+                    goto end;
+
+                var rawTags = raw[1..nextPart];
+                string key = null;
+
+                for (int x = 0;x <= rawTags.Length;x++) {
+                    int index;
+                    if (key == null)
+                        index = rawTags.IndexOfAny(tagSeperators, x);
+                    else
+                        index = rawTags.IndexOf(';', x);
+
+                    if (index == -1) {
+                        if (key != null)
+                            tagDict[key] = rawTags[x..];
+                        else
+                            tagDict[rawTags[x..]] = "1";
+                        break;
+                    } else {
+                        if (rawTags[index] == '=')
+                            key = rawTags[x..index];
+                        else {
+                            if (key != null) {
+                                tagDict[key] = rawTags[x..index];
+                                key = null;
+                            } else
+                                tagDict[rawTags[x..index]] = "1";
                         }
-                        else if (raw[i] == ';')
-                        {
-                            if (key == null)
-                                tagDict[raw.Substring(start, i - start)] = "1";
-                            else
-                                tagDict[key] = raw.Substring(start, i - start);
-                            start = i + 1;
-                        }
-                        else if (raw[i] == ' ')
-                        {
-                            if (key == null)
-                                tagDict[raw.Substring(start, i - start)] = "1";
-                            else
-                                tagDict[key] = raw.Substring(start, i - start);
-                            break;
-                        }
-                    }
-                }
-                else if (state < ParserState.STATE_PREFIX && raw[i] == ':')
-                {
-                    state = ParserState.STATE_PREFIX;
-                    starts[(int)state] = ++i;
-                }
-                else if (state < ParserState.STATE_COMMAND)
-                {
-                    state = ParserState.STATE_COMMAND;
-                    starts[(int)state] = i;
-                }
-                else if (state < ParserState.STATE_TRAILING && raw[i] == ':')
-                {
-                    state = ParserState.STATE_TRAILING;
-                    starts[(int)state] = ++i;
-                    break;
-                }
-                else if (state < ParserState.STATE_TRAILING && raw[i] == '+' || state < ParserState.STATE_TRAILING && raw[i] == '-')
-                {
-                    state = ParserState.STATE_TRAILING;
-                    starts[(int)state] = i;
-                    break;
-                }
-                else if (state == ParserState.STATE_COMMAND)
-                {
-                    state = ParserState.STATE_PARAM;
-                    starts[(int)state] = i;
+					}
+
+                    x = index;
                 }
 
-                while (i < raw.Length && raw[i] != ' ')
-                    ++i;
+                raw = raw[(nextPart + 1)..];
             }
 
-            lens[(int)state] = raw.Length - starts[(int)state];
-            string cmd = raw.Substring(starts[(int)ParserState.STATE_COMMAND],
-                lens[(int)ParserState.STATE_COMMAND]);
+            if (raw[0] == ':') {
+                nextPart = raw.IndexOf(' ');
+                if (nextPart == -1)
+                    goto end;
 
-            IrcCommand command = IrcCommand.Unknown;
-            switch (cmd)
-            {
+                prefix = raw[1..nextPart];
+                raw = raw[(nextPart + 1)..];
+            }
+
+            nextPart = raw.IndexOf(' ');
+            string commandRaw = null;
+
+            if (nextPart == -1)
+                nextPart = raw.Length;
+
+            commandRaw = raw[..nextPart];
+            raw = raw[nextPart..];
+
+            if (raw.Length != 0) {
+                var trailingSeperator = raw.IndexOf(':');
+                if (trailingSeperator == -1) {
+                    parameters = raw[1..].Split(' ');
+			    } else {
+                    Span<int> seperIndexes = stackalloc int[32];
+                    int i = 1;
+
+                    for (int x = 1;x < raw.Length;x++) {
+                        if (i >= 32)
+                            goto end;
+
+                        if (raw[x] == ' ') {
+                            if (raw[x+1] == ':') {
+                                seperIndexes[i++] = x++;
+                                break;
+                            } else
+                                seperIndexes[i++] = x;
+                        }
+                    }
+                    seperIndexes[i] = raw.Length;
+
+                    parameters = new string[i];
+
+                    for (int x = 0;x < i;x++) {
+                        parameters[x] = raw[(seperIndexes[x]+1)..seperIndexes[x+1]];
+				    }
+
+                    if (parameters[^1][0] == ':')
+                        parameters[^1] = parameters[^1][1..];
+                }
+            }
+            
+            switch (commandRaw) {
                 case "PRIVMSG":
                     command = IrcCommand.PrivMsg;
                     break;
@@ -185,44 +210,8 @@ namespace TwitchLib.Client.Internal.Parsing
                     break;
             }
 
-            string parameters = raw.Substring(starts[(int)ParserState.STATE_PARAM],
-                lens[(int)ParserState.STATE_PARAM]);
-            string message = raw.Substring(starts[(int)ParserState.STATE_TRAILING],
-                lens[(int)ParserState.STATE_TRAILING]);
-            string hostmask = raw.Substring(starts[(int)ParserState.STATE_PREFIX],
-                lens[(int)ParserState.STATE_PREFIX]);
-            return new IrcMessage(command, new[] { parameters, message }, hostmask, tagDict);
+end:
+            return new IrcMessage(command, parameters, prefix, tagDict);
         }
-
-        /// <summary>
-        /// Enum ParserState
-        /// </summary>
-        private enum ParserState
-        {
-            /// <summary>
-            /// The state none
-            /// </summary>
-            STATE_NONE,
-            /// <summary>
-            /// The state v3
-            /// </summary>
-            STATE_V3,
-            /// <summary>
-            /// The state prefix
-            /// </summary>
-            STATE_PREFIX,
-            /// <summary>
-            /// The state command
-            /// </summary>
-            STATE_COMMAND,
-            /// <summary>
-            /// The state parameter
-            /// </summary>
-            STATE_PARAM,
-            /// <summary>
-            /// The state trailing
-            /// </summary>
-            STATE_TRAILING
-        };
     }
 }

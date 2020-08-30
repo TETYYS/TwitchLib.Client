@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
+    <TargetFramework>netstandard2.1</TargetFramework>
     <PackageId>TwitchLib.Client.Models</PackageId>
     <Version>3.0.4</Version>
     <Description>Project contains all of the models used in TwitchLib.Client.</Description>
