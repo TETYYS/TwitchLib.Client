@@ -12,23 +12,11 @@ namespace TwitchLib.Client.Models.Internal
         /// </summary>
         public string Channel {
             get {
-                if (_parameters?.Length == 0)
+                if (Parameters?.Length == 0)
                     return "";
 
-                return _parameters[0].StartsWith("#") ? _parameters[0][1..] : _parameters[0];
+                return Parameters[0].StartsWith("#") ? Parameters[0][1..] : Parameters[0];
             }
-        }
-
-        public string Params {
-            get {
-                if (_parameters?.Length == 0)
-                    return "";
-
-                if (_parameters.Length == 1)
-                    return _parameters[0];
-
-                return String.Join(" ", _parameters);
-			}
         }
 
         /// <summary>
@@ -36,12 +24,12 @@ namespace TwitchLib.Client.Models.Internal
         /// </summary>
         public string Message => Trailing;
 
-        public string Trailing => _parameters != null && _parameters.Length > 1 ? _parameters[_parameters.Length - 1] : "";
+        public string Trailing => Parameters != null && Parameters.Length > 1 ? Parameters[Parameters.Length - 1] : "";
 
         /// <summary>
         /// Command parameters
         /// </summary>
-        private readonly string[] _parameters;
+        public string[] Parameters { get; }
 
         /// <summary>
         /// The user whose message it is
@@ -69,7 +57,7 @@ namespace TwitchLib.Client.Models.Internal
         /// <param name="user"></param>
         public IrcMessage(string user)
         {
-            _parameters = null;
+            Parameters = null;
             User = user;
             Hostmask = null;
             Command = IrcCommand.Unknown;
@@ -88,7 +76,7 @@ namespace TwitchLib.Client.Models.Internal
             var idx = hostmask.IndexOf('!');
             User = idx != -1 ? hostmask.Substring(0, idx) : hostmask;
             Hostmask = hostmask;
-            _parameters = parameters;
+            Parameters = parameters;
             Command = command;
             Tags = tags;
         }
@@ -115,16 +103,18 @@ namespace TwitchLib.Client.Models.Internal
                 raw.Append(":").Append(Hostmask).Append(" ");
             }
             raw.Append(Command.ToString().ToUpper().Replace("RPL_", ""));
-            if (_parameters.Length <= 0) return raw.ToString();
+            if (Parameters.Length <= 0) return raw.ToString();
 
-            if (_parameters[0] != null && _parameters[0].Length > 0)
-            {
-                raw.Append(" ").Append(_parameters[0]);
+            for (var x = 0;x < Parameters.Length - 1;x++) {
+                raw.Append(" ").Append(Parameters[x]);
             }
-            if (_parameters.Length > 1 && _parameters[1] != null && _parameters[1].Length > 0)
-            {
-                raw.Append(" :").Append(_parameters[1]);
-            }
+
+            var lastIndex = Parameters.Length - 1;
+            if (Parameters[lastIndex].Contains(" "))
+                raw.Append(" :").Append(Parameters[lastIndex]);
+            else
+                raw.Append(" ").Append(Parameters[lastIndex]);
+
             return raw.ToString();
         }
     }

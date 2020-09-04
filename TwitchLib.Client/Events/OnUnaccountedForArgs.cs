@@ -1,5 +1,7 @@
 ﻿using System;
 
+using TwitchLib.Client.Models.Internal;
+
 namespace TwitchLib.Client.Events
 {
     /// <summary>
@@ -13,7 +15,7 @@ namespace TwitchLib.Client.Events
         /// Gets or sets the raw irc.
         /// </summary>
         /// <value>The raw irc.</value>
-        public string RawIRC { get; set; }
+        public IrcMessage RawIRC { get; set; }
         /// <summary>
         /// Gets or sets the location.
         /// </summary>
