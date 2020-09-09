@@ -66,7 +66,7 @@ namespace TwitchLib.Client
         private List<KeyValuePair<string, DateTime>> _awaitingJoins;
 
         private System.Timers.Timer _pingTimer;
-        private DateTime _lastPong;
+        public DateTime LastPong { get; private set; }
 
         /// <summary>
         /// The irc parser
@@ -834,11 +834,11 @@ namespace TwitchLib.Client
 
         private void PingTimer(object sender, System.Timers.ElapsedEventArgs e)
         {
-            if ((DateTime.UtcNow - _lastPong).TotalMilliseconds > PingTimeout) {
+            if ((DateTime.UtcNow - LastPong).TotalMilliseconds > PingTimeout) {
                 _pingTimer.Stop();
                 _client.Close(true);
             } else
-                _pingTimer.Interval = (_lastPong.AddMilliseconds(PingTimeout) - DateTime.UtcNow).TotalMilliseconds;
+                _pingTimer.Interval = (LastPong.AddMilliseconds(PingTimeout) - DateTime.UtcNow).TotalMilliseconds;
         }
 
         /// <summary>
@@ -896,7 +896,7 @@ namespace TwitchLib.Client
                 case IrcCommand.Ping:
                     if (!DisableAutoPong)
                         SendRaw("PONG");
-                    _lastPong = DateTime.UtcNow;
+                    LastPong = DateTime.UtcNow;
                     return;
                 case IrcCommand.Pong:
                     return;
