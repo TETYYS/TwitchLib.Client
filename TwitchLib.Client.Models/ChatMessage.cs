@@ -11,7 +11,6 @@ namespace TwitchLib.Client.Models
     /// <summary>Class represents ChatMessage in a Twitch channel.</summary>
     public class ChatMessage : TwitchLibMessage
     {
-        protected readonly MessageEmoteCollection _emoteCollection;
         /// <summary>Information associated with badges. Not all badges will be in this list. Use carefully.</summary>
         public List<KeyValuePair<string, string>> BadgeInfo { get; }
         /// <summary>If viewer sent bits in their message, total amount will be here.</summary>
@@ -50,16 +49,13 @@ namespace TwitchLib.Client.Models
 
         //Example IRC message: @badges=moderator/1,warcraft/alliance;color=;display-name=Swiftyspiffyv4;emotes=;mod=1;room-id=40876073;subscriber=0;turbo=0;user-id=103325214;user-type=mod :swiftyspiffyv4!swiftyspiffyv4@swiftyspiffyv4.tmi.twitch.tv PRIVMSG #swiftyspiffy :asd
         /// <summary>Constructor for ChatMessage object.</summary>
-        /// <param name="botUsername">The username of the bot that received the message.</param>
         /// <param name="ircMessage">The IRC message from Twitch to be processed.</param>
         /// <param name="emoteCollection">The <see cref="MessageEmoteCollection"/> to register new emotes on and, if desired, use for emote replacement.</param>
         /// <param name="replaceEmotes">Whether to replace emotes for this chat message. Defaults to false.</param>
-        public ChatMessage(string botUsername, IrcMessage ircMessage, ref MessageEmoteCollection emoteCollection, bool replaceEmotes = false)
+        public ChatMessage(IrcMessage ircMessage)
         {
-            BotUsername = botUsername;
             RawIrcMessage = ircMessage.ToString();
             Message = ircMessage.Message;
-            _emoteCollection = emoteCollection;
             RawTags = ircMessage.Tags;
 
             Username = ircMessage.User;
@@ -169,41 +165,6 @@ namespace TwitchLib.Client.Models
                 }
             }
 
-            //Parse the emoteSet
-            if (EmoteSet != null && Message != null && EmoteSet.Emotes.Count > 0)
-            {
-                var uniqueEmotes = EmoteSet.RawEmoteSetString.Split('/');
-                foreach (var emote in uniqueEmotes)
-                {
-                    var firstColon = emote.IndexOf(':');
-                    var firstComma = emote.IndexOf(',');
-                    if (firstComma == -1) firstComma = emote.Length;
-                    var firstDash = emote.IndexOf('-');
-                    if (firstColon > 0 && firstDash > firstColon && firstComma > firstDash)
-                    {
-                        if (int.TryParse(emote.Substring(firstColon + 1, firstDash - firstColon - 1), out var low) &&
-                            int.TryParse(emote.Substring(firstDash + 1, firstComma - firstDash - 1), out var high))
-                        {
-                            if (low >= 0 && low < high && high < Message.Length)
-                            {
-                                //Valid emote, let's parse
-                                var id = emote.Substring(0, firstColon);
-                                //Pull the emote text from the message
-                                var text = Message.Substring(low, high - low + 1);
-                                _emoteCollection.Add(new MessageEmote(id, text));
-                            }
-                        }
-                    }
-                }
-                if (replaceEmotes)
-                {
-                    EmoteReplacedMessage = _emoteCollection.ReplaceEmotes(Message);
-                }
-            }
-
-            if (EmoteSet == null)
-                EmoteSet = new EmoteSet(null, Message);
-
             // Check if display name was set, and if it wasn't, set it to username
             if (string.IsNullOrEmpty(DisplayName))
                 DisplayName = Username;
@@ -225,12 +186,11 @@ namespace TwitchLib.Client.Models
             }
         }
 
-        public ChatMessage(string botUsername, string userId, string userName, string displayName, string colorHex, Color color, EmoteSet emoteSet,
+        public ChatMessage(string userId, string userName, string displayName, string colorHex, Color color, EmoteSet emoteSet,
             string message, UserType userType, string channel, string id, bool isSubscriber, int subscribedMonthCount, string roomId, bool isTurbo, bool isModerator,
             bool isMe, bool isBroadcaster, Noisy noisy, string rawIrcMessage, string emoteReplacedMessage, List<KeyValuePair<string, string>> badges,
             CheerBadge cheerBadge, int bits, double bitsInDollars)
         {
-            BotUsername = botUsername;
             UserId = userId;
             DisplayName = displayName;
             ColorHex = colorHex;

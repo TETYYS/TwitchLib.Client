@@ -343,14 +343,14 @@ namespace TwitchLib.Client.Extensions
         /// <param name="cheerBadge">The cheer badge.</param>
         /// <param name="bits">The bits.</param>
         /// <param name="bitsInDollars">The bits in dollars.</param>
-        public static void InvokeMessageReceived(this TwitchClient client, string botUsername, string userId, string userName, string displayName, string colorHex,
+        public static void InvokeMessageReceived(this TwitchClient client, string userId, string userName, string displayName, string colorHex,
             Color color, EmoteSet emoteSet, string message, UserType userType, string channel, string id, bool isSubscriber, int subscribedMonthCount, string roomId, bool isTurbo,
             bool isModerator, bool isMe, bool isBroadcaster, Noisy noisy, string rawIrcMessage, string emoteReplacedMessage, List<KeyValuePair<string, string>> badges,
             CheerBadge cheerBadge, int bits, double bitsInDollars)
         {
             OnMessageReceivedArgs model = new OnMessageReceivedArgs()
             {
-                ChatMessage = new ChatMessage(botUsername, userId, userName, displayName, colorHex, color, emoteSet, message, userType, channel, id, isSubscriber,
+                ChatMessage = new ChatMessage(userId, userName, displayName, colorHex, color, emoteSet, message, userType, channel, id, isSubscriber,
                 subscribedMonthCount, roomId, isTurbo, isModerator, isMe, isBroadcaster, noisy, rawIrcMessage, emoteReplacedMessage, badges, cheerBadge, bits,
                 bitsInDollars)
             };
@@ -678,11 +678,11 @@ namespace TwitchLib.Client.Extensions
         /// <param name="message">The message.</param>
         /// <param name="userType">Type of the user.</param>
         public static void InvokeWhisperReceived(this TwitchClient client, List<KeyValuePair<string, string>> badges, string colorHex, Color color, string username, string displayName, EmoteSet emoteSet, string threadId, string messageId,
-            string userId, bool isTurbo, string botUsername, string message, UserType userType)
+            string userId, bool isTurbo, string message, UserType userType)
         {
             OnWhisperReceivedArgs model = new OnWhisperReceivedArgs()
             {
-                WhisperMessage = new WhisperMessage(badges, colorHex, color, username, displayName, emoteSet, threadId, messageId, userId, isTurbo, botUsername, message, userType)
+                WhisperMessage = new WhisperMessage(badges, colorHex, color, username, displayName, emoteSet, threadId, messageId, userId, isTurbo, message, userType)
             };
             client.RaiseEvent("OnWhisperReceived", model);
         }

@@ -10,16 +10,16 @@ namespace TwitchLib.Client.Internal.Parsing
     /// <summary>
     /// Class IrcParser.
     /// </summary>
-    public class IrcParser
+    public static class IrcParser
     {
-        readonly char[] tagSeperators = new[] { ';', '=' };
+        readonly static char[] tagSeperators = new[] { ';', '=' };
 
         /// <summary>
         /// Builds an IrcMessage from a raw string
         /// </summary>
         /// <param name="raw">Raw IRC message</param>
         /// <returns>IrcMessage object</returns>
-        public IrcMessage ParseIrcMessage(string raw)
+        public static IrcMessage ParseIrcMessage(string raw)
         {
             IrcCommand command = IrcCommand.Unknown;
             Dictionary<string, string> tagDict = new Dictionary<string, string>(16);

@@ -36,10 +36,6 @@ namespace TwitchLib.Client
         /// </summary>
         private IClient _client;
         /// <summary>
-        /// The channel emotes
-        /// </summary>
-        private MessageEmoteCollection _channelEmotes = new MessageEmoteCollection();
-        /// <summary>
         /// The join channel queue
         /// </summary>
         private readonly Queue<JoinedChannel> _joinChannelQueue = new Queue<JoinedChannel>();
@@ -68,10 +64,6 @@ namespace TwitchLib.Client
         private System.Timers.Timer _pingTimer;
         public DateTime LastPong { get; private set; }
 
-        /// <summary>
-        /// The irc parser
-        /// </summary>
-        private readonly IrcParser _ircParser;
         /// <summary>
         /// The joined channel manager
         /// </summary>
@@ -116,24 +108,10 @@ namespace TwitchLib.Client
         public bool IsConnected => IsInitialized && _client != null ? _client.IsConnected : false;
 
         /// <summary>
-        /// The emotes this channel replaces.
-        /// </summary>
-        /// <value>The channel emotes.</value>
-        /// <remarks>Twitch-handled emotes are automatically added to this collection (which also accounts for
-        /// managing user emote permissions such as sub-only emotes). Third-party emotes will have to be manually
-        /// added according to the availability rules defined by the third-party.</remarks>
-        public MessageEmoteCollection ChannelEmotes => _channelEmotes;
-
-        /// <summary>
         /// Will disable the client from sending automatic PONG responses to PING
         /// </summary>
         /// <value><c>true</c> if [disable automatic pong]; otherwise, <c>false</c>.</value>
         public bool DisableAutoPong { get; set; } = false;
-        /// <summary>
-        /// Determines whether Emotes will be replaced in messages.
-        /// </summary>
-        /// <value><c>true</c> if [will replace emotes]; otherwise, <c>false</c>.</value>
-        public bool WillReplaceEmotes { get; set; } = false;
         /// <summary>
         /// If set to true, the library will not check upon channel join that if BeingHosted event is subscribed, that the bot is connected as broadcaster. Only override if the broadcaster is joining multiple channels, including the broadcaster's.
         /// </summary>
@@ -404,7 +382,6 @@ namespace TwitchLib.Client
             _client = client;
             _protocol = protocol;
             _joinedChannelManager = new JoinedChannelManager();
-            _ircParser = new IrcParser();
         }
 
 		/// <summary>
@@ -751,7 +728,7 @@ namespace TwitchLib.Client
 
                 Log($"Received: {line}");
                 OnSendReceiveData?.Invoke(this, new OnSendReceiveDataArgs { Direction = Enums.SendReceiveDirection.Received, Data = line });
-                HandleIrcMessage(_ircParser.ParseIrcMessage(line));
+                HandleIrcMessage(IrcParser.ParseIrcMessage(line));
             }
         }
 
@@ -982,7 +959,7 @@ namespace TwitchLib.Client
                 return;
             }
 
-            ChatMessage chatMessage = new ChatMessage(TwitchUsername, ircMessage, ref _channelEmotes, WillReplaceEmotes);
+            ChatMessage chatMessage = new ChatMessage(ircMessage);
             OnMessageReceived?.Invoke(this, new OnMessageReceivedArgs { ChatMessage = chatMessage });
         }
 
@@ -1181,7 +1158,7 @@ namespace TwitchLib.Client
         /// <param name="ircMessage">The irc message.</param>
         private void HandleWhisper(IrcMessage ircMessage)
         {
-            WhisperMessage whisperMessage = new WhisperMessage(ircMessage, TwitchUsername);
+            WhisperMessage whisperMessage = new WhisperMessage(ircMessage);
             OnWhisperReceived?.Invoke(this, new OnWhisperReceivedArgs { WhisperMessage = whisperMessage });
         }
 

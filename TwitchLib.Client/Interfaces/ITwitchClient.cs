@@ -13,11 +13,6 @@ namespace TwitchLib.Client.Interfaces
     public interface ITwitchClient
     {
         /// <summary>
-        /// Gets the channel emotes.
-        /// </summary>
-        /// <value>The channel emotes.</value>
-        MessageEmoteCollection ChannelEmotes { get; }
-        /// <summary>
         /// Gets the connection credentials.
         /// </summary>
         /// <value>The connection credentials.</value>
@@ -53,11 +48,6 @@ namespace TwitchLib.Client.Interfaces
         /// </summary>
         /// <value>The twitch username.</value>
         string TwitchUsername { get; }
-        /// <summary>
-        /// Gets or sets a value indicating whether [will replace emotes].
-        /// </summary>
-        /// <value><c>true</c> if [will replace emotes]; otherwise, <c>false</c>.</value>
-        bool WillReplaceEmotes { get; set; }
 
         /// <summary>
         /// Occurs when [on being hosted].

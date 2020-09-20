@@ -19,7 +19,7 @@ namespace TwitchLib.Client.Models
         public string Message { get; }
 
         public WhisperMessage(List<KeyValuePair<string, string>> badges, string colorHex, Color color, string username, string displayName, EmoteSet emoteSet, string threadId, string messageId,
-            string userId, bool isTurbo, string botUsername, string message, UserType userType)
+            string userId, bool isTurbo, string message, UserType userType)
         {
             Badges = badges;
             ColorHex = colorHex;
@@ -31,7 +31,6 @@ namespace TwitchLib.Client.Models
             MessageId = messageId;
             UserId = userId;
             IsTurbo = isTurbo;
-            BotUsername = botUsername;
             Message = message;
             UserType = userType;
         }
@@ -41,10 +40,9 @@ namespace TwitchLib.Client.Models
         /// </summary>
         /// <param name="ircMessage">Received IRC string from Twitch server.</param>
         /// <param name="botUsername">Active bot username receiving message.</param>
-        public WhisperMessage(IrcMessage ircMessage, string botUsername)
+        public WhisperMessage(IrcMessage ircMessage)
         {
             Username = ircMessage.User;
-            BotUsername = botUsername;
 
             Message = ircMessage.Message;
             foreach (var tag in ircMessage.Tags.Keys)

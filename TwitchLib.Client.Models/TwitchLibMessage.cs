@@ -10,8 +10,6 @@ namespace TwitchLib.Client.Models
     {
         /// <summary>List of key-value pair badges.</summary>
         public List<KeyValuePair<string, string>> Badges { get; protected set;}
-        /// <summary>Twitch username of the bot that received the message.</summary>
-        public string BotUsername { get; protected set;}
         /// <summary>Property representing HEX color as a System.Drawing.Color object.</summary>
         public Color Color { get; protected set;}
         /// <summary>Hex representation of username color in chat (THIS CAN BE NULL IF VIEWER HASN'T SET COLOR).</summary>
