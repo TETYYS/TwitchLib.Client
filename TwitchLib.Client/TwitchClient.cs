@@ -536,7 +536,7 @@ namespace TwitchLib.Client
         /// <summary>
         /// Start connecting to the Twitch IRC chat.
         /// </summary>
-        public async Task ConnectAsync()
+        public async Task ConnectAsync(CancellationToken CancellationToken)
         {
             if (!IsInitialized) HandleNotInitialized();
             Log($"Connecting to: {ConnectionCredentials.TwitchWebsocketURI}");
@@ -545,7 +545,7 @@ namespace TwitchLib.Client
             _pingTimer = new System.Timers.Timer(PingTimeout);
             _pingTimer.Elapsed += PingTimer;
             _pingTimer.Start();
-            await _client.Open();
+            await _client.Open(CancellationToken);
 
             Log("Should be connected!");
         }
@@ -568,13 +568,13 @@ namespace TwitchLib.Client
         /// <summary>
         /// Start reconnecting to the Twitch IRC chat.
         /// </summary>
-        public async Task Reconnect()
+        public async Task Reconnect(CancellationToken CancellationToken)
         {
             if (!IsInitialized) HandleNotInitialized();
             Log($"Reconnecting to Twitch");
             _pingTimer.Close();
             _joinedChannelManager.Clear();
-            await _client.Reconnect();
+            await _client.Reconnect(CancellationToken);
         }
         #endregion
 
@@ -925,7 +925,8 @@ namespace TwitchLib.Client
                     HandleRoomState(ircMessage);
                     break;
                 case IrcCommand.Reconnect:
-                    Reconnect();
+                    var cts = new CancellationTokenSource(TimeSpan.FromSeconds(JoinWaitTimeout));
+                    _ = Reconnect(cts.Token);
                     break;
                 case IrcCommand.UserNotice:
                     HandleUserNotice(ircMessage);

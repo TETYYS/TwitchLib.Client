@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using TwitchLib.Client.Events;
 using TwitchLib.Client.Models;
@@ -237,7 +238,7 @@ namespace TwitchLib.Client.Interfaces
         /// <summary>
         /// Connects this instance.
         /// </summary>
-        Task ConnectAsync();
+        Task ConnectAsync(CancellationToken CancellationToken);
         /// <summary>
         /// Disconnects this instance.
         /// </summary>
@@ -245,7 +246,7 @@ namespace TwitchLib.Client.Interfaces
         /// <summary>
         /// Reconnects this instance.
         /// </summary>
-        Task Reconnect();
+        Task Reconnect(CancellationToken CancellationToken);
 
         /// <summary>
         /// Gets the joined channel.
