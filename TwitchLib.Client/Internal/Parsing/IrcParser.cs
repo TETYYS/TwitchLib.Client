@@ -21,6 +21,7 @@ namespace TwitchLib.Client.Internal.Parsing
         /// <returns>IrcMessage object</returns>
         public static IrcMessage ParseIrcMessage(string raw)
         {
+            string rawOrig = raw;
             IrcCommand command = IrcCommand.Unknown;
             Dictionary<string, string> tagDict = new Dictionary<string, string>(16);
             string[] parameters = Array.Empty<string>();
@@ -211,7 +212,7 @@ namespace TwitchLib.Client.Internal.Parsing
             }
 
 end:
-            return new IrcMessage(command, parameters, prefix, tagDict);
+            return new IrcMessage(rawOrig, command, parameters, prefix, tagDict);
         }
     }
 }

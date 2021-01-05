@@ -7,6 +7,8 @@ namespace TwitchLib.Client.Models.Internal
 {
     public class IrcMessage
     {
+        private string Raw;
+
         /// <summary>
         /// The channel the message was sent in
         /// </summary>
@@ -71,7 +73,7 @@ namespace TwitchLib.Client.Models.Internal
         /// <param name="parameters">Command params</param>
         /// <param name="hostmask">User</param>
         /// <param name="tags">IRCv3 tags</param>
-        public IrcMessage(IrcCommand command, string[] parameters, string hostmask, Dictionary<string, string> tags = null)
+        public IrcMessage(string raw, IrcCommand command, string[] parameters, string hostmask, Dictionary<string, string> tags = null)
         {
             var idx = hostmask.IndexOf('!');
             User = idx != -1 ? hostmask.Substring(0, idx) : hostmask;
@@ -79,10 +81,15 @@ namespace TwitchLib.Client.Models.Internal
             Parameters = parameters;
             Command = command;
             Tags = tags;
+
+            if (raw == null)
+                Raw = GenerateRaw();
+		    else
+                Raw = raw;
         }
 
-        public new string ToString()
-        {
+        private string GenerateRaw()
+		{
             var raw = new StringBuilder(32);
             if (Tags != null)
             {
@@ -116,6 +123,11 @@ namespace TwitchLib.Client.Models.Internal
                 raw.Append(" ").Append(Parameters[lastIndex]);
 
             return raw.ToString();
+		}
+
+        public override string ToString()
+        {
+            return Raw;
         }
     }
 }
